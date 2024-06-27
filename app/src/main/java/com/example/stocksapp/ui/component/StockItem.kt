@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -65,6 +66,6 @@ fun StockItem (modifier: Modifier){
 @Composable
 fun ItemPreview() {
     StocksAppTheme {
-        StockItem(modifier = Modifier.width(130.dp))
+        StockItem(modifier = Modifier.width(130.dp).wrapContentHeight())
     }
 }
