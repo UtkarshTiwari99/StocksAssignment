@@ -6,6 +6,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.stocksapp.ui.screens.HomeScreen
 import android.util.Log
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 
 @Composable
 fun Navigation() {
@@ -14,11 +17,11 @@ fun Navigation() {
     NavHost(navController = navController, startDestination = Screen.HomeScreen.route){
         composable(Screen.HomeScreen.route) {
             Log.e("Home Screen", "home")
-            HomeScreen()
+            HomeScreen(Modifier.padding(0.dp))
         }
         composable(Screen.SplashScreen.route) {
             Log.e("Splash Screen", "splash")
-            HomeScreen()
+            HomeScreen(Modifier.padding(0.dp))
         }
     }
 }
