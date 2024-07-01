@@ -13,7 +13,8 @@ data class TopLoserStock(
     val price: Double,
     val change_amount: Double,
     val change_percentage: String,
-    val volume: Long
+    val volume: Long,
+    val creationTimeStamp: Long = System.currentTimeMillis()
 )
 
 fun TopLoserStock.toExternal() = Stock(

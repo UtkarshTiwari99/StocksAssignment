@@ -8,8 +8,7 @@ import com.example.stocksapp.data.dto.StockInfo
     tableName = "stock_info"
 )
 data class StockInfoEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id:Long=0,
+    @PrimaryKey
     val symbol: String="",
     val assetType: String="",
     val name: String="",
@@ -24,6 +23,7 @@ data class StockInfoEntity(
     val beta: Double=0.0,
     val fiftyTwoWeekHigh: Double=0.0,
     val fiftyTwoWeekLow: Double=0.0,
+    val creationTimeStamp: Long = System.currentTimeMillis()
 )
 
 fun StockInfoEntity.toExternal() = StockInfo(
@@ -40,7 +40,7 @@ fun StockInfoEntity.toExternal() = StockInfo(
     profitMargin = profitMargin,
     beta = beta,
     fiftyTwoWeekHigh = fiftyTwoWeekHigh,
-    fiftyTwoWeekLow = fiftyTwoWeekLow,
+    fiftyTwoWeekLow = fiftyTwoWeekLow
 )
 
 fun List<StockInfoEntity>.toExternal() = map(StockInfoEntity::toExternal)

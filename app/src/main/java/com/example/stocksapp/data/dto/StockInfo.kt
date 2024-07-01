@@ -40,4 +40,4 @@ fun StockInfo.toInternal() = StockInfoEntity(
     beta = beta
 )
 
-fun List<StockInfo>.toInternalForGainer() = map(StockInfo::toInternal)
+fun List<StockInfo>.toInternal() = map(StockInfo::toInternal)

@@ -48,7 +48,7 @@ import java.util.function.DoubleFunction
 
 fun genrateImage():String {
     val links =
-        listOf("https://th.bing.com/th/id/R.7e557f1c0864829c54c300d15bee69f4?rik=fjZN1AYH30vXIw&riu=http%3a%2f%2fpngimg.com%2fuploads%2fgoogle%2fgoogle_PNG19635.png&ehk=ZmsumEtoeJQhKoUzQTZO2TEbYPBu0%2b7EFdjmJ3qljls%3d&risl=&pid=ImgRaw&r=0")
+        listOf("https://logos-world.net/wp-content/uploads/2020/09/Oracle-Emblem.jpg","https://th.bing.com/th/id/OIP.UcklnyxiP2gyRdTxtVAhvQHaHa?rs=1&pid=ImgDetMain","https://th.bing.com/th/id/OIP.cCkt-lMjHsMIqfVx8xeg9gHaKe?rs=1&pid=ImgDetMain","https://1000logos.net/wp-content/uploads/2016/11/meta-logo-1536x864.png","https://cdn.freelogovectors.net/wp-content/uploads/2023/11/groww_logo-freelogovectors.net_.png","https://th.bing.com/th/id/OIP.Bs2PlI-wmfFiYzgWNRO0pgHaDO?rs=1&pid=ImgDetMain","https://i.pinimg.com/originals/01/ca/da/01cada77a0a7d326d85b7969fe26a728.jpg","","https://th.bing.com/th/id/R.7e557f1c0864829c54c300d15bee69f4?rik=fjZN1AYH30vXIw&riu=http%3a%2f%2fpngimg.com%2fuploads%2fgoogle%2fgoogle_PNG19635.png&ehk=ZmsumEtoeJQhKoUzQTZO2TEbYPBu0%2b7EFdjmJ3qljls%3d&risl=&pid=ImgRaw&r=0")
     return links.random()
 }
 

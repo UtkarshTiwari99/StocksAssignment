@@ -14,6 +14,7 @@ data class TimeSeriesEntity (
     val low: Double,
     val close: Double,
     val volume: Long,
+    val creationTimeStamp: Long = System.currentTimeMillis()
 )
 
 

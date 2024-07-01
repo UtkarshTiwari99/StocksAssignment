@@ -41,7 +41,7 @@ fun Navigation(stockViewModel: StockViewModel) {
                     stockViewModel
                 ) {
                     stockViewModel.loadInfraData("IBM")
-                    stockViewModel.loadStockInfo(it)
+                    stockViewModel.loadStockInfo(it.copy(ticker = "IBM"))
                     navController.navigate(Screen.DetailScreen.route)
                 }
             }

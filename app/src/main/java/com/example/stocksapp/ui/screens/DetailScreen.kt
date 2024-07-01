@@ -1,6 +1,5 @@
 package com.example.stocksapp.ui.screens
 
-import android.icu.number.NumberFormatter
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -29,7 +28,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.ArrowDropUp
-import androidx.compose.material.icons.rounded.Balance
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -41,7 +39,6 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -50,20 +47,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.Typeface
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.substring
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberImagePainter
 import com.example.stocksapp.data.dto.Stock
-import com.example.stocksapp.data.dto.StockInfo
 import com.example.stocksapp.data.model.StockData
 import com.example.stocksapp.data.viewmodel.StockViewModel
 import com.example.stocksapp.ui.component.genrateImage
@@ -73,12 +69,25 @@ import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottomAxis
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberStartAxis
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
+import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineSpec
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
+import com.patrykandpatrick.vico.compose.cartesian.rememberFadingEdges
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoZoomState
-import com.patrykandpatrick.vico.core.cartesian.Zoom
+import com.patrykandpatrick.vico.compose.common.component.rememberShapeComponent
+import com.patrykandpatrick.vico.compose.common.component.rememberTextComponent
+import com.patrykandpatrick.vico.compose.common.of
+import com.patrykandpatrick.vico.compose.common.shader.color
+import com.patrykandpatrick.vico.core.cartesian.DefaultPointConnector
+import com.patrykandpatrick.vico.core.cartesian.axis.AxisItemPlacer
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
+import com.patrykandpatrick.vico.core.common.Dimensions
+import com.patrykandpatrick.vico.core.common.data.DrawingModelInterpolator
+import com.patrykandpatrick.vico.core.common.shader.DynamicShader
+import com.patrykandpatrick.vico.core.common.shape.Shape
 import java.text.DecimalFormat
+import java.text.SimpleDateFormat
+import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -119,7 +128,9 @@ fun DetailScreen(modifier: Modifier, stockViewModel: StockViewModel,stock: Stock
                     val painter =
                         rememberImagePainter(genrateImage())
 
-                    Image(contentScale = ContentScale.Fit,painter = painter,modifier=Modifier.background(Color.White).size(80.dp), contentDescription = "")
+                    Image(contentScale = ContentScale.Fit,painter = painter,modifier= Modifier
+                        .background(Color.White)
+                        .size(80.dp), contentDescription = "")
 
                     Column(
                         modifier = Modifier
@@ -482,10 +493,20 @@ fun PerformanceChart(modifier: Modifier = Modifier, list: List<StockData> = empt
 ) {
 //    val zipList: List<Pair<Float, Float>> = list.zipWithNext()
 
-    val datapoint= mutableListOf<Float>()
+    val datapoint= mutableListOf<Pair<Double,StockData>>()
+    list.forEach {
+        val sdf: SimpleDateFormat = SimpleDateFormat("YYYY-MM-dd HH:mm:ss")
+        val mDate: Date? = sdf.parse(it.timestamp)
+        val timeInMilliseconds: Long = mDate?.time ?:0
+        datapoint.add(Pair(timeInMilliseconds.toDouble(),it))
+    }
 
-    for(a in 1..list.size){
-        datapoint.add(a.toFloat())
+    val real= mutableListOf<Pair<Double,Double>>()
+    datapoint.sortBy { it.first }
+    datapoint.forEachIndexed{idx,item ->
+        if((idx+1)%(60)==0){
+            real.add(Pair(item.first,item.second.close))
+        }
     }
 
     if (isLoading||list.isEmpty()) {
@@ -505,20 +526,36 @@ fun PerformanceChart(modifier: Modifier = Modifier, list: List<StockData> = empt
             modelProducer.tryRunTransaction {
             lineSeries {
                 series(
-                    y = list.map { it.close },
-                    x = datapoint,
+                    y = real.map { it.second },
+                    x = real.map { it.first },
                 )
             }
             }
 //        }
         CartesianChartHost(
             rememberCartesianChart(
-                rememberLineCartesianLayer(),
+                rememberLineCartesianLayer(spacing = 20.dp, lines = listOf(
+                    rememberLineSpec(
+                        shader = DynamicShader.color(Color.Green),
+                        pointConnector = DefaultPointConnector(cubicStrength = 0f),
+                ))),
                 startAxis = rememberStartAxis(guideline = null),
-                bottomAxis = rememberBottomAxis(guideline = null),
+                bottomAxis = rememberBottomAxis(guideline = null, itemPlacer = remember {
+                    AxisItemPlacer.Horizontal.default(spacing = list.size)
+                },
+                    titleComponent =
+                    rememberTextComponent(
+                        background = rememberShapeComponent(Shape.Pill, Color.Green),
+                        color = Color.White,
+                        padding = Dimensions.of(horizontal = 8.dp, vertical = 2.dp),
+                        margins = Dimensions.of(top = 4.dp),
+                        typeface = android.graphics.Typeface.MONOSPACE,
+                    ),
+                    title = "Time Stamp"),
+                fadingEdges = rememberFadingEdges()
             ),modelProducer, modifier = Modifier.fillMaxSize(),
             marker = rememberMarker(),
-            zoomState = rememberVicoZoomState(),
+            zoomState = rememberVicoZoomState(true),
         )
     }}
 

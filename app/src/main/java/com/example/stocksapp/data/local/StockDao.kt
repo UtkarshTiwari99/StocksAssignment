@@ -22,19 +22,10 @@ interface StockDao {
     @Query("SELECT * FROM infra_data WHERE ticker= :ticker")
     fun getAllInfraData(ticker:String): Flow<List<TimeSeriesEntity>>
 
-    @Query("DELETE FROM top_gainer_stocks")
-    suspend fun deleteAllTopGainer()
-
     @Query("SELECT * FROM top_loser_stocks")
     fun getAllTopLoser(): Flow<List<TopLoserStock>>
 
-    @Query("DELETE FROM top_loser_stocks")
-    suspend fun deleteAllTopLoser()
-
-    @Query("DELETE FROM stock_info WHERE symbol=:ticker")
-    suspend fun deleteStockInfo(ticker: String)
-
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrUpdate(entity: StockInfoEntity)
 
     @Upsert
@@ -45,5 +36,17 @@ interface StockDao {
 
     @Upsert
     suspend fun upsertAllTimeSeries(tasks: List<TimeSeriesEntity>)
+
+    @Query("DELETE FROM top_gainer_stocks WHERE ticker=:ticker")
+    suspend fun deleteAllTopGainer(ticker:String)
+
+    @Query("DELETE FROM top_loser_stocks WHERE ticker=:ticker")
+    suspend fun deleteAllTopLoser(ticker: String)
+
+    @Query("DELETE FROM stock_info WHERE symbol=:ticker")
+    suspend fun deleteStockInfo(ticker: String)
+
+    @Query("DELETE FROM infra_data WHERE ticker=:ticker")
+    suspend fun deleteStockIntraData(ticker: String)
 
 }

@@ -1,5 +1,6 @@
 package com.example.stocksapp.data.remote
 
+import android.util.Log
 import com.example.stocksapp.data.dto.StockInfo
 import com.example.stocksapp.data.dto.TopStockData
 import com.example.stocksapp.data.dto.toExternal
@@ -19,11 +20,10 @@ class RemoteDataSource @Inject constructor(
         handleDataResult(extra = { it }) { remoteService.getTopStocks() }
 
     suspend fun getStockInfo(ticker:String): NetworkResult<StockInfo> =
-        handleDataResult(extra = {it}) { remoteService.getTickerInfo() }
+        handleDataResult(extra = {it}) { remoteService.getTickerInfo(ticker = ticker) }
 
     suspend fun getStockIntraDay(ticker:String): NetworkResult<List<StockData>> =
-        handleDataResult(extra = {it.toExternal()}) { remoteService.getIntraDayData() }
-
+        handleDataResult(extra = {it.toExternal()}) { remoteService.getIntraDayData(ticker=ticker) }
 
     private suspend fun <T : Any,B:Any > handleDataResult(
         extra: ((T) -> B),
@@ -32,14 +32,19 @@ class RemoteDataSource @Inject constructor(
         return try {
             val response = execute()
             val body = response.body()
+            Log.e("uth",response.toString())
+            Log.e("uth",response.body().toString())
             if (response.isSuccessful && body != null) {
                     Success(extra(body))
             } else {
                 Error(code = response.code(), message = response.message())
             }
         } catch (e: HttpException) {
+            Log.e("uth error",e.stackTrace.toString())
             Error(code = e.code(), message = e.message())
         } catch (e: Throwable) {
+            Log.e("uth error trace",e.stackTraceToString())
+            Log.e("uth error",e.message.toString())
             Exception(e)
         }
     }

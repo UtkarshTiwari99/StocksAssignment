@@ -7,6 +7,7 @@ import com.example.stocksapp.data.dto.Stock
 import com.example.stocksapp.data.dto.StockInfo
 import com.example.stocksapp.data.dto.TimeSeriesData
 import com.example.stocksapp.data.dto.TopStockData
+import com.example.stocksapp.data.remote.Properties.KEY
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Header
@@ -15,17 +16,23 @@ import retrofit2.http.Query
 
 interface RemoteService {
 
-    @GET("/query?function=TOP_GAINERS_LOSERS&apikey=demo")
+    @GET("/query?function=TOP_GAINERS_LOSERS&apikey=${KEY}")
     suspend fun getTopStocks(): Response<TopStockData>
 
-    @GET("/query?function=OVERVIEW&symbol=IBM&apikey=demo")
+    @GET("/query")
     suspend fun getTickerInfo(
-//        @Query("ticker") ticker: String
+        @Query("function") function: String="OVERVIEW",
+        @Query("symbol") ticker: String,
+        @Query("apikey") apiKey: String= KEY,
     ): Response<StockInfo>
 
-    @GET("/query?function=TIME_SERIES_INTRADAY&symbol=IBM&interval=5min&outputsize=full&apikey=demo")
+    @GET("/query")
     suspend fun getIntraDayData(
-//        @Query("ticker") ticker: String
+        @Query("function") function: String="TIME_SERIES_INTRADAY",
+        @Query("symbol") ticker: String,
+        @Query("interval") interval: String="5min",
+        @Query("outputsize") outputSize: String="full",
+        @Query("apikey") apiKey: String= KEY
     ): Response<TimeSeriesData>
 
 }

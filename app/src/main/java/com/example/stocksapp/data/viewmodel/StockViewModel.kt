@@ -143,40 +143,53 @@ class StockViewModel @Inject constructor(private val stockRepository: StockRepos
     }
 
     fun loadStockInfo(stock: Stock) {
+        Log.e("uth","load StockINfo")
         _isLoading.update {
             true
         }
         viewModelScope.launch {
-            when (val data = stockRepository.loadStockData(stock.ticker)) {
-                is Success -> {
-                    launch {
-                        stockRepository.observeStockInfo("IBM").collect {
-                            _stockInfo.value = it.copy(change_percentage = stock.change_percentage, price = stock.price.toString(), change_amount = stock.change_amount.toString())
-                            Log.e("Grow", it.toString())
+            Log.e("uth","load StockINfo launcehed")
+            try {
+                val data = stockRepository.loadStockData(stock.ticker)
+                when (data) {
+                    is Success -> {
+                        launch {
+                            stockRepository.observeStockInfo(ticker = stock.ticker).collect {
+                                if (it != null) {
+                                    _stockInfo.value = it.copy(
+                                        change_percentage = stock.change_percentage,
+                                        price = stock.price.toString(),
+                                        change_amount = stock.change_amount.toString()
+                                    )
+                                }
+                                Log.e("Grow", it.toString())
+                            }
+                        }
+                    }
+
+                    is Loading -> {
+                        _isLoading.update {
+                            true
+                        }
+                    }
+
+                    is Error -> {
+                        _isError.update {
+                            data.message
+                        }
+                    }
+
+                    is Exception -> {
+                        _isError.update {
+                            data.e.message
                         }
                     }
                 }
-
-                is Loading -> {
-                    _isLoading.update {
-                        true
-                    }
+                _isLoading.update {
+                    false
                 }
-
-                is Error -> {
-                    _isError.update {
-                        data.message
-                    }
-                }
-
-                is Exception -> {
-                    _isError.update {
-                        data.e.message
-                    }
-                }
-            }
-            _isLoading.update {
-                false
+            }catch (e:kotlin.Exception){
+                Log.e("uth",e.message.toString())
             }
         }
     }
