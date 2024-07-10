@@ -35,7 +35,7 @@ fun Navigation(stockViewModel: StockViewModel) {
         {
 
             composable(Screen.HomeScreen.route) {
-                Log.e("Home Screen", "home")
+                Log.e("Home Screen ", "home")
                 HomeScreen(
                     Modifier,
                     stockViewModel
