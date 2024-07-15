@@ -86,6 +86,7 @@ dependencies {
     implementation(libs.androidx.paging.runtime.ktx)
     implementation(libs.androidx.paging.compose)
     testImplementation(libs.androidx.paging.common.ktx)
+    implementation(libs.androidx.room.paging)
 
 
     implementation(libs.androidx.material.icons.extended)
@@ -102,7 +103,10 @@ dependencies {
     implementation(libs.vico.core)
     implementation(libs.vico.compose)
 
-    implementation("io.coil-kt:coil-compose:1.3.2")
+    implementation(libs.google.accompanist.swiperefresh)
+
+
+    implementation("io.coil-kt:coil-compose:2.6.0")
     kapt("androidx.room:room-compiler:2.6.1")
 
 }

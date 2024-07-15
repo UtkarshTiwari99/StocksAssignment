@@ -6,5 +6,5 @@ object Properties {
     const val MAX_AGE = 1
     const val MAX_STALE = 1
     const val KEY="demo"
-    const val EXPIRATION=30000
+    const val EXPIRATION=30
 }

@@ -1,6 +1,5 @@
 package com.example.stocksapp.data.dto
 
-import com.example.stocksapp.data.local.StockInfoEntity
 import com.google.gson.annotations.SerializedName
 
 data class StockInfo(
@@ -22,22 +21,3 @@ data class StockInfo(
     var change_amount: String="",
     var change_percentage: String="",
 )
-
-fun StockInfo.toInternal() = StockInfoEntity(
-    symbol = symbol,
-    assetType = assetType,
-    name = name,
-    description = description,
-    exchange = exchange,
-    sector = sector,
-    profitMargin = profitMargin,
-    industry = industry,
-    marketCapitalization = marketCapitalization,
-    peRatio = peRatio,
-    dividendYield = dividendYield,
-    fiftyTwoWeekHigh = fiftyTwoWeekHigh,
-    fiftyTwoWeekLow = fiftyTwoWeekLow,
-    beta = beta
-)
-
-fun List<StockInfo>.toInternal() = map(StockInfo::toInternal)

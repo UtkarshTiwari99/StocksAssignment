@@ -1,6 +1,5 @@
 package com.example.stocksapp.data.dto
 
-import com.example.stocksapp.data.model.StockData
 import com.google.gson.annotations.SerializedName
 
 data class TimeSeriesData(
@@ -15,20 +14,3 @@ data class StockDataDto(
     @SerializedName("4. close") val close: Double,
     @SerializedName("5. volume") val volume: Long
 )
-
-
-fun TimeSeriesData.toExternal(): List<StockData>{
-    if(timeSeries==null||metaData==null)
-        return emptyList()
-    return timeSeries.map {
-        StockData(
-            ticker = metaData?.get("2. Symbol") ?: "",
-            timestamp = it.key,
-            open = it.value.open,
-            high = it.value.high,
-            low = it.value.low,
-            close = it.value.close,
-            volume = it.value.volume,
-        )
-    }.toList()
-}

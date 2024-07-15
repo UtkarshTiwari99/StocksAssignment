@@ -1,10 +1,11 @@
 package com.example.stocksapp.ui.screens
 
-import android.util.Log
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,26 +42,28 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.font.Typeface
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberImagePainter
-import com.example.stocksapp.data.dto.Stock
-import com.example.stocksapp.data.model.StockData
+import com.example.stocksapp.data.local.StockData
+import com.example.stocksapp.data.local.StockTimeSeriesItem
 import com.example.stocksapp.data.viewmodel.StockViewModel
 import com.example.stocksapp.ui.component.genrateImage
 import com.example.stocksapp.ui.component.rememberMarker
@@ -82,7 +85,6 @@ import com.patrykandpatrick.vico.core.cartesian.axis.AxisItemPlacer
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
 import com.patrykandpatrick.vico.core.common.Dimensions
-import com.patrykandpatrick.vico.core.common.data.DrawingModelInterpolator
 import com.patrykandpatrick.vico.core.common.shader.DynamicShader
 import com.patrykandpatrick.vico.core.common.shape.Shape
 import java.text.DecimalFormat
@@ -91,30 +93,16 @@ import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun DetailScreen(modifier: Modifier, stockViewModel: StockViewModel,stock: Stock){
-
-    val isLoading by stockViewModel.isLoading.collectAsState(true)
+fun DetailScreen(modifier: Modifier, stockViewModel: StockViewModel,stockInfo: StockData){
 
     val isGraphLoading by stockViewModel.isGraphLoading.collectAsState(true)
-
-    Log.e("utkarsh", isGraphLoading.toString())
-
-    if (isLoading) {
-        Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-            CircularProgressIndicator(
-                trackColor = Color.Green,
-                modifier = Modifier.size(50.dp)
-            )
-        }
-    } else {
 
         val formatter = remember {
             DecimalFormat("#,###.##")
         }
 
-        val lineGraphData by stockViewModel.infraData.collectAsState(emptyList())
+        val lineGraphData = stockInfo.stocks
 
-        val stockInfo by stockViewModel.stockInfo.collectAsState(null)
         Column(modifier = modifier.fillMaxSize()) {
 
             Box(
@@ -138,17 +126,17 @@ fun DetailScreen(modifier: Modifier, stockViewModel: StockViewModel,stock: Stock
                             .align(Alignment.CenterVertically)
                     ) {
                         Text(
-                            stockInfo?.symbol ?: "",
+                            stockInfo.symbol,
                             fontSize = 18.sp,
                             fontWeight = FontWeight(700)
                         )
                         Text(
-                            text = "${stockInfo?.symbol ?: ""} ${stockInfo?.assetType?:""}",
+                            text = "${stockInfo.symbol} ${stockInfo.assetType}",
                             fontSize = 12.sp,
                             fontWeight = FontWeight(600)
                         )
                         Text(
-                            text = stockInfo?.exchange ?: "",
+                            text = stockInfo.exchange,
                             fontSize = 12.sp,
                             fontWeight = FontWeight(600)
                         )
@@ -160,18 +148,18 @@ fun DetailScreen(modifier: Modifier, stockViewModel: StockViewModel,stock: Stock
                 )
                 {
                     Text(
-                        text = stockInfo?.price.toString(), fontSize = 13.sp, style = TextStyle(
+                        text = stockInfo.price.toString(), fontSize = 13.sp, style = TextStyle(
                             platformStyle = PlatformTextStyle(
                                 includeFontPadding = false
                             ), fontSize = 10.sp,
-                            color = if((stockInfo?.change_amount?.toDouble()?:0.0)>0.000000) Color.Green else Color.Red
+                            color = if((stockInfo.change_amount)>0.000000) Color.Green else Color.Red
                         ), modifier = Modifier.padding(end = 6.dp)
                     )
                     Row(verticalAlignment = Alignment.Top) {
                         Text(
-                            text = (stockInfo?.change_percentage.toString()),
+                            text = (stockInfo.change_percentage),
                             fontSize = 13.sp,
-                            color = if((stockInfo?.change_amount?.toDouble()?:0.0)>0.000000) Color.Green else Color.Red,
+                            color = if((stockInfo.change_amount)>0.000000) Color.Green else Color.Red,
                             style = TextStyle(
                                 platformStyle = PlatformTextStyle(
                                     includeFontPadding = false
@@ -179,7 +167,7 @@ fun DetailScreen(modifier: Modifier, stockViewModel: StockViewModel,stock: Stock
                             )
                         )
 
-                       if(stock.change_amount<0) {
+                       if(stockInfo.change_amount.toDouble()<0.0) {
                             Icon(
                                 Icons.Rounded.ArrowDropDown, contentDescription = "Logo",
                                 Modifier
@@ -227,7 +215,6 @@ fun DetailScreen(modifier: Modifier, stockViewModel: StockViewModel,stock: Stock
                         for (a in 1..3) {
                             datapoint.add((1..1000).random().toFloat())
                         }
-
                         PerformanceChart(
                             list = lineGraphData,
                             modifier = Modifier.height(
@@ -301,7 +288,7 @@ fun DetailScreen(modifier: Modifier, stockViewModel: StockViewModel,stock: Stock
                         Column(modifier = Modifier.padding(6.dp)) {
                             Text(
                                 modifier = Modifier.padding(bottom = 10.dp),
-                                text = stockInfo?.description ?: ""
+                                text = stockInfo.description
                             )
                             Column(
                                 modifier = Modifier
@@ -312,7 +299,7 @@ fun DetailScreen(modifier: Modifier, stockViewModel: StockViewModel,stock: Stock
                             )
                             {
                                 Text(
-                                    "Industry: ${stockInfo?.industry ?: ""}",
+                                    "Industry: ${stockInfo.industry}",
                                     fontSize = 14.sp,
                                     color = Color.Red.copy(0.7f), style = TextStyle(
                                         platformStyle = PlatformTextStyle(
@@ -328,7 +315,7 @@ fun DetailScreen(modifier: Modifier, stockViewModel: StockViewModel,stock: Stock
                                         .padding(vertical = 5.dp, horizontal = 9.dp)
                                 )
                                 Text(
-                                    text = "Sector: ${stockInfo?.sector ?: ""}", style = TextStyle(
+                                    text = "Sector: ${stockInfo.sector}", style = TextStyle(
                                         platformStyle = PlatformTextStyle(
                                             includeFontPadding = false
                                         ), fontSize = 14.sp
@@ -353,7 +340,7 @@ fun DetailScreen(modifier: Modifier, stockViewModel: StockViewModel,stock: Stock
                                 MetricVisual(
                                     alignment = Alignment.Start,
                                     metricName = "52-Week Low",
-                                    value = stockInfo?.fiftyTwoWeekLow.toString() ?: ""
+                                    value = stockInfo.fiftyTwoWeekLow.toString()
                                 )
                                 Slider(
                                     modifier = Modifier
@@ -381,7 +368,7 @@ fun DetailScreen(modifier: Modifier, stockViewModel: StockViewModel,stock: Stock
                                             horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
                                             Text(
-                                                stockInfo?.price.toString(), style = TextStyle(
+                                                stockInfo.price.toString(), style = TextStyle(
                                                     platformStyle = PlatformTextStyle(
                                                         includeFontPadding = false
                                                     ), fontSize = 10.sp
@@ -400,7 +387,7 @@ fun DetailScreen(modifier: Modifier, stockViewModel: StockViewModel,stock: Stock
                                 MetricVisual(
                                     alignment = Alignment.End,
                                     metricName = "52-Week High",
-                                    value = stockInfo?.fiftyTwoWeekHigh.toString() ?: ""
+                                    value = stockInfo.fiftyTwoWeekHigh.toString()
                                 )
                             }
                             Row(
@@ -413,13 +400,13 @@ fun DetailScreen(modifier: Modifier, stockViewModel: StockViewModel,stock: Stock
                                     Pair(
                                         "Market Cap",
                                         formatNumber(
-                                            (stockInfo?.marketCapitalization ?: 0).toString()
+                                            (stockInfo.marketCapitalization).toString()
                                         )
                                     ),
-                                    Pair("P/E Ratio", stockInfo?.peRatio ?: 0),
-                                    Pair("Beta", stockInfo?.beta ?: 0),
-                                    Pair("Dividend Yield", "${stockInfo?.dividendYield ?: 0}%"),
-                                    Pair("Profit Margin", stockInfo?.profitMargin ?: 0)
+                                    Pair("P/E Ratio", stockInfo.peRatio),
+                                    Pair("Beta", stockInfo.beta),
+                                    Pair("Dividend Yield", "${stockInfo.dividendYield}%"),
+                                    Pair("Profit Margin", stockInfo.profitMargin)
                                 )
                                 list.forEach {
                                     MetricVisual(
@@ -435,7 +422,6 @@ fun DetailScreen(modifier: Modifier, stockViewModel: StockViewModel,stock: Stock
                 }
             }
         }
-    }
 }
 
 @Composable
@@ -479,7 +465,7 @@ private fun MetricVisual(modifier: Modifier=Modifier,alignment: Alignment.Horizo
     }
 }
 
-private fun getValuePercentageForRange(value: Float, max: Float, min: Float) =
+private fun getValuePercentageForRange(value: Double, max: Double, min: Double) =
     (value - min) / (max - min)
 
 fun getSecondMinValue(list: List<Float>): Float {
@@ -488,12 +474,12 @@ fun getSecondMinValue(list: List<Float>): Float {
 }
 
 @Composable
-fun PerformanceChart(modifier: Modifier = Modifier, list: List<StockData> = emptyList(),isLoading:Boolean
+fun PerformanceChart(modifier: Modifier = Modifier, list: List<StockTimeSeriesItem> = emptyList(), isLoading:Boolean
 //    listOf(10f, 20f, 3f, 1f,10f,20f,30f,10f,22f,22.4f,22f,10f,20f,30f,10f,22f,22.4f,22f,10f,20f,30f,10f,22f,22.4f,22f,10f,20f,30f,10f,22f,22.4f,22f,10f,20f,30f,10f,22f,22.4f,22f)
 ) {
 //    val zipList: List<Pair<Float, Float>> = list.zipWithNext()
 
-    val datapoint= mutableListOf<Pair<Double,StockData>>()
+    val datapoint= mutableListOf<Pair<Double, StockTimeSeriesItem>>()
     list.forEach {
         val sdf: SimpleDateFormat = SimpleDateFormat("YYYY-MM-dd HH:mm:ss")
         val mDate: Date? = sdf.parse(it.timestamp)
@@ -519,7 +505,7 @@ fun PerformanceChart(modifier: Modifier = Modifier, list: List<StockData> = empt
     } else {
     Row(modifier = modifier.padding(6.dp)) {
 
-        Log.e("LineGraph",list.toString())
+//        Log.e("LineGraph",list.toString())
 
         val modelProducer = remember { CartesianChartModelProducer.build() }
 //        LaunchedEffect(Unit) {
@@ -561,6 +547,85 @@ fun PerformanceChart(modifier: Modifier = Modifier, list: List<StockData> = empt
 
 }
 
+
+@Composable
+fun PerformanceChart2(modifier: Modifier = Modifier, list: List<StockTimeSeriesItem> = emptyList(), isLoading:Boolean) {
+
+    val datapoint= mutableListOf<Pair<Double, StockTimeSeriesItem>>()
+    list.forEach {
+        val sdf: SimpleDateFormat = SimpleDateFormat("YYYY-MM-dd HH:mm:ss")
+        val mDate: Date? = sdf.parse(it.timestamp)
+        val timeInMilliseconds: Long = mDate?.time ?:0
+        datapoint.add(Pair(timeInMilliseconds.toDouble(),it))
+    }
+
+    val real= mutableListOf<Pair<Double,Double>>()
+    datapoint.sortBy { it.first }
+    datapoint.forEachIndexed{idx,item ->
+        if((idx+1)%(60)==0){
+            real.add(Pair(item.first,item.second.close))
+        }
+    }
+
+    if (isLoading||list.isEmpty()) {
+        Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            CircularProgressIndicator(
+                trackColor = Color.Green,
+                modifier = Modifier.size(50.dp)
+            )
+        }
+    } else {
+        Row(modifier = modifier.padding(6.dp)) {
+
+        var isVisual by remember {
+            mutableFloatStateOf(0f)
+        }
+
+        Text(text = "$isVisual", fontSize = 20.sp, color = Color.Magenta)
+
+        val max = real.map{it.second}.max()
+        val min =  real.map{it.second}.min()
+
+        val lineColor =
+            Color.Black// <-- Line color is Green if its going up and Red otherwise
+
+        for (pair in real) {
+
+            val fromValuePercentage = getValuePercentageForRange(pair.first, max, min)
+            val toValuePercentage = getValuePercentageForRange(pair.second, max, min)
+
+            Canvas(
+                modifier = Modifier
+                    .background(Color.White)
+                    .pointerInput(key1 = "someStringKey?") {
+                        detectTapGestures(
+                            onPress = { isVisual = pair.first.toFloat() }
+                        )
+                    }
+                    .fillMaxHeight()
+                    .weight(1f),
+                onDraw = {
+                    val fromPoint = Offset(
+                        x = 0f,
+                        y = size.height.times(1 - fromValuePercentage).toFloat()
+                    ) // <-- Use times so it works for any available space
+                    val toPoint =
+                        Offset(
+                            x = size.width,
+                            y = size.height.times(1 - toValuePercentage).toFloat()
+                        ) // <-- Also here!
+                    drawLine(
+                        color = lineColor,
+                        start = fromPoint,
+                        end = toPoint,
+                        strokeWidth = 3f
+                    )
+                })
+        }
+        }
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun DetailPreview() {
@@ -573,66 +638,3 @@ fun DetailPreview() {
 //        )
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//        var isVisual by remember {
-//            mutableFloatStateOf(0f)
-//        }
-//
-//        Text(text = "$isVisual", fontSize = 20.sp, color = Color.Magenta)
-//
-//        val max = list.max()
-//        val min = list.min()
-//
-//        val lineColor =
-//            if (list.last() > list.first()) Color.Black else Color.Black // <-- Line color is Green if its going up and Red otherwise
-//
-//        for (pair in zipList) {
-//
-//            val fromValuePercentage = getValuePercentageForRange(pair.first, max, min)
-//            val toValuePercentage = getValuePercentageForRange(pair.second, max, min)
-//
-//            Canvas(
-//                modifier = Modifier
-//                    .background(Color.White)
-//                    .pointerInput(key1 = "someStringKey?") {
-//                        detectTapGestures(
-//                            onPress = { isVisual = pair.first }
-//                        )
-//                    }
-//                    .fillMaxHeight()
-//                    .weight(1f),
-//                onDraw = {
-//                    val fromPoint = Offset(
-//                        x = 0f,
-//                        y = size.height.times(1 - fromValuePercentage)
-//                    ) // <-- Use times so it works for any available space
-//                    val toPoint =
-//                        Offset(
-//                            x = size.width,
-//                            y = size.height.times(1 - toValuePercentage)
-//                        ) // <-- Also here!
-//                    drawLine(
-//                        color = lineColor,
-//                        start = fromPoint,
-//                        end = toPoint,
-//                        strokeWidth = 3f
-//                    )
-//                })
-//        }

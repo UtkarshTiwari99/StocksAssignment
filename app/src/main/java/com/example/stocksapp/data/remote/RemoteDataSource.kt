@@ -2,28 +2,46 @@ package com.example.stocksapp.data.remote
 
 import android.util.Log
 import com.example.stocksapp.data.dto.StockInfo
+import com.example.stocksapp.data.dto.TimeSeriesData
 import com.example.stocksapp.data.dto.TopStockData
-import com.example.stocksapp.data.dto.toExternal
-import com.example.stocksapp.data.dto.toInternal
-import com.example.stocksapp.data.local.StockInfoEntity
-import com.example.stocksapp.data.model.StockData
 import retrofit2.HttpException
 import retrofit2.Response
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.Exception
 
 @Singleton
 class RemoteDataSource @Inject constructor(
     private val remoteService: RemoteService
 ) {
+
     suspend fun getTopStocks(): NetworkResult<TopStockData> =
-        handleDataResult(extra = { it }) { remoteService.getTopStocks() }
+        handleDataResult(extra = { it }) {
+            Log.e("Network Request Groww Assignment", "Top Stock Requested")
+            val result = remoteService.getTopStocks()
+            Log.e("Network Request Groww Assignment", "Top Stock Request Completed")
+            result
+        }
+
 
     suspend fun getStockInfo(ticker:String): NetworkResult<StockInfo> =
-        handleDataResult(extra = {it}) { remoteService.getTickerInfo(ticker = ticker) }
+        handleDataResult(extra = {it}) {
+            Log.e("Network Request Groww Assignment","Stock Info for $ticker Requested")
+            val result= remoteService.getTickerInfo(ticker = ticker)
+            Log.e("Network Request Groww Assignment","Stock Info for $ticker Request Completed")
+            result
+        }
 
-    suspend fun getStockIntraDay(ticker:String): NetworkResult<List<StockData>> =
-        handleDataResult(extra = {it.toExternal()}) { remoteService.getIntraDayData(ticker=ticker) }
+    suspend fun getStockIntraDay(ticker: String): NetworkResult<TimeSeriesData> =
+        handleDataResult(extra = { it }) {
+            Log.e("Network Request Groww Assignment", "Stock Infra Data for $ticker Requested")
+            val result = remoteService.getIntraDayData(ticker = ticker)
+            Log.e(
+                "Network Request Groww Assignment",
+                "Stock Infra Data for $ticker Request Completed"
+            )
+            result
+        }
 
     private suspend fun <T : Any,B:Any > handleDataResult(
         extra: ((T) -> B),
@@ -32,20 +50,24 @@ class RemoteDataSource @Inject constructor(
         return try {
             val response = execute()
             val body = response.body()
-            Log.e("uth",response.toString())
-            Log.e("uth",response.body().toString())
             if (response.isSuccessful && body != null) {
                     Success(extra(body))
             } else {
                 Error(code = response.code(), message = response.message())
             }
         } catch (e: HttpException) {
-            Log.e("uth error",e.stackTrace.toString())
+            Log.e("Network Error trace",e.stackTrace.toString())
             Error(code = e.code(), message = e.message())
-        } catch (e: Throwable) {
-            Log.e("uth error trace",e.stackTraceToString())
-            Log.e("uth error",e.message.toString())
-            Exception(e)
+        }
+        catch (e: Exception) {
+            Log.e("Network Error Trace",e.stackTraceToString())
+            Log.e("Network Error",e.message.toString())
+            Error(code = 500, message = e.message.toString())
+        }
+        catch (e: Throwable) {
+            Log.e("Network Error trace",e.stackTraceToString())
+            Log.e("Network Error",e.message.toString())
+            com.example.stocksapp.data.remote.Exception(e)
         }
     }
 }

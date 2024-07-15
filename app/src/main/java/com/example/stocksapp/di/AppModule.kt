@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import androidx.room.Room
 import com.example.stocksapp.data.local.LocalStockDatabase
+import com.example.stocksapp.data.local.RemoteKeysDao
 import com.example.stocksapp.data.local.StockDao
 import com.example.stocksapp.data.remote.Properties.BASE_URL
 import com.example.stocksapp.data.remote.Properties.CACHE_SIZE
@@ -48,7 +49,13 @@ object AppModule {
     }
 
     @Provides
-    fun provideTaskDao(database: LocalStockDatabase): StockDao = database.stockDao()
+    @Singleton
+    fun provideStockDao(database: LocalStockDatabase): StockDao = database.stockDao()
+
+    @Provides
+    @Singleton
+    fun provideRemoteKeysDao(database: LocalStockDatabase): RemoteKeysDao =
+        database.remoteKeyDao()
 
     @Provides
     @Singleton
@@ -104,5 +111,4 @@ object AppModule {
 //            .addMigrations() later add migrations if u change the table
             .build()
     }
-
 }

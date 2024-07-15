@@ -3,15 +3,12 @@ package com.example.stocksapp.data.remote
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import com.example.stocksapp.data.dto.Stock
 import com.example.stocksapp.data.dto.StockInfo
 import com.example.stocksapp.data.dto.TimeSeriesData
 import com.example.stocksapp.data.dto.TopStockData
 import com.example.stocksapp.data.remote.Properties.KEY
 import retrofit2.Response
 import retrofit2.http.GET
-import retrofit2.http.Header
-import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface RemoteService {
