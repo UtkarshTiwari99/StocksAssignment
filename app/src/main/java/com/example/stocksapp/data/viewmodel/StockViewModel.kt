@@ -76,6 +76,7 @@ class StockViewModel @Inject constructor(private val stockRepository: StockRepos
                     }
                 }
 
+
                 is Loading -> {
                     _isLoading.update {
                         true
